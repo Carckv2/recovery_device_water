@@ -1,0 +1,69 @@
+on init
+    setprop sys.usb.configfs 1
+    setprop sys.usb.ffs.aio_compat 1
+
+    export LD_LIBRARY_PATH /system/lib64:/vendor/lib64:/vendor/lib64/hw
+
+on fs && property:ro.debuggable=0
+    # distinguish USB shoulde connect or not, i.e. CDP vs SDP
+    write /sys/class/udc/musb-hdrc/device/cmode 2
+    # set charging free due to it wait for USB activation
+    start adbd
+
+on post-fs
+    # Support A/B feature for emmc boot region
+    symlink /dev/block/sda /dev/block/mmcblk0boot0
+    symlink /dev/block/sdb /dev/block/mmcblk0boot1
+    symlink /dev/block/mmcblk0boot0 /dev/block/platform/bootdevice/by-name/preloader_a
+    symlink /dev/block/mmcblk0boot1 /dev/block/platform/bootdevice/by-name/preloader_b
+    symlink /dev/block/mmcblk0boot0 /dev/block/by-name/preloader_a
+    symlink /dev/block/mmcblk0boot1 /dev/block/by-name/preloader_b
+
+    exec u:r:update_engine:s0 root root -- /system/bin/mtk_plpath_utils
+
+
+on property:ro.crypto.state=encrypted && property:ro.crypto.type=file
+    install_keyring
+
+on boot
+    start health-hal-2-1
+
+on property:crypto.ready=1
+    start keymaster-4-0-beanpod
+
+on property:hwservicemanager.ready=true
+    start keymaster-4-0-beanpod
+    start gatekeeper-1-0
+    
+on property:ro.crypto.state=unsupported
+    stop teei_daemon
+    stop keymaster-4-0-beanpod
+    stop gatekeeper-1-0
+    
+on property:ro.crypto.state=unencrypted
+    stop teei_daemon
+    stop keymaster-4-0-beanpod
+    stop gatekeeper-1-0
+        
+on property:twrp.decrypt.done=true
+    stop teei_daemon
+    stop keymaster-4-0-beanpod
+    stop gatekeeper-1-0
+
+service keymaster-4-0-beanpod /vendor/bin/hw/android.hardware.keymaster@4.0-service.beanpod
+    interface android.hardware.keymaster@4.0::IKeymasterDevice default
+    user root
+    group root drmrpc
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+on boot
+    # disable some cpu cores
+    write /sys/bus/cpu/devices/cpu2/online 0
+    write /sys/bus/cpu/devices/cpu3/online 0
+    write /sys/bus/cpu/devices/cpu6/online 0
+    write /sys/bus/cpu/devices/cpu7/online 0
+
+    # kill bootprof
+    write /proc/bootprof "0"
