@@ -89,7 +89,7 @@ jobs:
           java-version: '8'
 
       - name: Setup SSH Keys
-        if: startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com')
+        if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') }}
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -121,7 +121,7 @@ jobs:
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
       - name: Clone common tree
-        if: "${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}"
+        if: ${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}
         run: |
           git clone ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
@@ -148,32 +148,56 @@ jobs:
       - name: Apply libfscrypttwrp patch
         run: |
           mkdir -p bootable/recovery/libfscrypt
-          echo 'cc_library({' > bootable/recovery/libfscrypt/Android.bp
-          echo '    name: "libfscrypttwrp",' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    defaults: ["recovery_defaults"],' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    recovery_available: true,' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    vendor_available: true,' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    srcs: [' >> bootable/recovery/libfscrypt/Android.bp
-          echo '        "fscrypt_twrp.cpp",' >> bootable/recovery/libfscrypt/Android.bp
-          echo '        "fscrypt.cpp",' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    ],' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    local_include_dirs: ["."],' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    shared_libs: [' >> bootable/recovery/libfscrypt/Android.bp
-          echo '        "liblog",' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    ],' >> bootable/recovery/libfscrypt/Android.bp
-          echo '    cflags: ["-Wno-unused-parameter"],' >> bootable/recovery/libfscrypt/Android.bp
-          echo '})' >> bootable/recovery/libfscrypt/Android.bp
 
-          echo '#include <fscrypt/fscrypt.h>' > bootable/recovery/libfscrypt/fscrypt_twrp.cpp
-          echo '' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
-          echo 'bool fscrypt_is_native() { return false; }' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
-          echo 'bool fscrypt_is_emulated() { return false; }' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
-          echo 'bool fscrypt_policy_set(const char* dir) { return true; }' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
+          cat << 'EOF' > bootable/recovery/libfscrypt/Android.bp
+cc_library_static {
+    name: "libfscrypttwrp",
+    recovery_available: true,
+    vendor_available: true,
+    srcs: [
+        "fscrypt_twrp.cpp",
+        "fscrypt.cpp",
+    ],
+    shared_libs: [
+        "liblog",
+    ],
+    local_include_dirs: ["."],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
+}
+EOF
 
-          echo '// Stub file for compatibility' > bootable/recovery/libfscrypt/fscrypt.cpp
+          cat << 'EOF' > bootable/recovery/libfscrypt/fscrypt_twrp.cpp
+#include <fscrypt/fscrypt.h>
 
-          if ! grep -q 'libfscrypttwrp' bootable/recovery/fs_mgr/Android.bp; then
-            sed -i '/static_libs: \[/a \\ \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
+bool fscrypt_is_native() {
+    return false;
+}
+
+bool fscrypt_is_emulated() {
+    return false;
+}
+
+bool fscrypt_policy_set(const char* dir) {
+    return true;
+}
+EOF
+
+          cat << 'EOF' > bootable/recovery/libfscrypt/fscrypt.cpp
+// Stub source file for compatibility
+EOF
+
+          FS_MGR_BP="bootable/recovery/fs_mgr/Android.bp"
+          if [ -f "$FS_MGR_BP" ]; then
+            if ! grep -q 'libfscrypttwrp' "$FS_MGR_BP"; then
+              sed -i '/static_libs: \[/a \ \ \ \ "libfscrypttwrp",' "$FS_MGR_BP"
+              echo "Injected libfscrypttwrp into $FS_MGR_BP"
+            fi
+          else
+            echo "Warning: $FS_MGR_BP not found, skipping injection."
           fi
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
