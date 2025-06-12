@@ -1,310 +1,3 @@
-Skip to content
-Chat history
-You said:
- bad indentation of a mapping entry 
-ChatGPT said:
-
-The error "bad indentation of a mapping entry" usually occurs in YAML files (like .yml or .yaml) and indicates that something is incorrectly indented — YAML is very sensitive to spacing and indentation.
-Example of the Error
-
-Bad:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-      steps:           # <- Incorrectly indented
-        - name: Checkout code
-          uses: actions/checkout@v3
-
-Good:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-Fixing the Error
-
-Here’s how to resolve it:
-
-    Use spaces only — never tabs in YAML.
-
-    Make sure children are consistently indented under their parent keys.
-
-    Typically use 2 spaces per indentation level.
-
-If you provide the specific YAML snippet that's causing this error, I can correct it for you.
-You said:
-run: |
-ChatGPT said:
-
-When you write:
-
-run: |
-
-in a GitHub Actions workflow, you're using the | symbol to indicate a multi-line string block — this means everything indented under it will be interpreted as a shell script.
-✅ Correct Example:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run a script
-        run: |
-          echo "Hello"
-          echo "World"
-
-⚠️ Common Mistake (bad indentation):
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run a script
-        run: |
-        echo "Hello"       # <- Not indented under `run: |` properly
-        echo "World"
-
-The lines after run: | must be indented. If they aren’t, you’ll get the "bad indentation of a mapping entry" error.
-
-If you're still unsure, feel free to paste your YAML snippet here — I’ll fix the indentation for you.
-You said:
-name: "libfscrypttwrp",   can not read a block mapping entry; a multiline key may not be an implicit key  shall i gib space or what
-ChatGPT said:
-
-Yes — this error:
-
-    "can not read a block mapping entry; a multiline key may not be an implicit key"
-
-happens when a line is badly formatted or missing expected spacing, especially around colons : in YAML.
-🔍 Your line:
-
-name: "libfscrypttwrp",
-
-⚠️ Issues:
-
-    Trailing comma , — YAML does not use commas at the end of lines.
-
-    The colon : is used for key-value mappings, and the value must be valid.
-
-✅ Corrected version:
-
-name: "libfscrypttwrp"
-
-Remove the comma.
-🔁 Summary of Fixes:
-
-    ❌ name: "libfscrypttwrp", → Invalid
-
-    ✅ name: "libfscrypttwrp" → Valid
-
-If you're still seeing issues, please paste the full block (e.g., the entire job or step) and I’ll help fix the structure.
-You said:
-    name: "libfscrypttwrp"
-ChatGPT said:
-
-The line:
-
-    name: "libfscrypttwrp"
-
-is valid YAML, as long as it’s correctly indented within the structure.
-
-However, if you're still seeing errors like:
-
-    "can not read a block mapping entry; a multiline key may not be an implicit key"
-
-then it's likely there's a problem somewhere else in the YAML file, possibly before or after this line.
-✅ Example in context:
-
-Here’s how name: "libfscrypttwrp" should appear in a valid GitHub Actions workflow:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "libfscrypttwrp"
-        run: |
-          echo "Building libfscrypttwrp"
-
-❌ Common YAML mistakes:
-
-    Using tabs instead of spaces
-
-    Leaving a comma at the end of the line
-
-    Misaligned indentation in multi-line blocks (like run: |)
-
-    Putting a colon : in a string without quoting it
-
-✅ Fix Checklist:
-
-    Always use spaces, not tabs
-
-    Don’t put commas at end of lines
-
-    Strings with colons (like "Build: Step 1") must be quoted
-
-    Multi-line blocks under run: | must be indented
-
-📌 Still not working?
-Please paste 10–15 lines before and after the problem line so I can pinpoint the exact error.
-You said:
-but still same 
-ChatGPT said:
-
-Thanks for confirming. If you're still getting the error:
-
-    "can not read a block mapping entry; a multiline key may not be an implicit key"
-
-then it’s almost certainly due to bad indentation or formatting nearby the name: "libfscrypttwrp" line — even if that line itself looks fine.
-🧩 Let’s troubleshoot this properly:
-
-Please paste the full relevant section of your YAML (around 10–15 lines including and surrounding the line name: "libfscrypttwrp"), so I can fix it exactly.
-📌 Until then, here’s a template of how it should look:
-
-name: Build TWRP
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "libfscrypttwrp"
-        run: |
-          echo "Building libfscrypttwrp"
-
-If even one space is off — or if tabs are used — YAML will break. Please paste your actual snippet and I’ll fix it perfectly for you.
-You said:
- - name: Apply libfscrypttwrp patch
-      run: |
-          mkdir -p bootable/recovery/libfscrypt
-
-          cat > bootable/recovery/libfscrypt/Android.bp << 'EOF'
-cc_library {
-    name: "libfscrypttwrp"
-    defaults: ["recovery_defaults"],
-    recovery_available: true,
-    vendor_available: true,
-    srcs: [
-        "fscrypt_twrp.cpp",
-        "fscrypt.cpp",
-    ],
-    local_include_dirs: ["."],
-    shared_libs: [
-        "liblog",
-    ],
-    cflags: ["-Wno-unused-parameter"],
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt_twrp.cpp << 'EOF'
-#include <fscrypt/fscrypt.h>
-
-bool fscrypt_is_native() {
-    return false;
-}
-
-bool fscrypt_is_emulated() {
-    return false;
-}
-
-bool fscrypt_policy_set(const char* dir) {
-    return true;
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt.cpp << 'EOF'
-// Stub file for compatibility
-EOF
-
-          if ! grep -q 'libfscrypttwrp' bootable/recovery/fs_mgr/Android.bp; then
-            sed -i '/static_libs: \[/a \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
-          fi
-         
-ChatGPT said:
-
-Thanks! You’re very close — the problem is caused by incorrect indentation at the top level of this step. In YAML (especially GitHub Actions), each step needs to be properly aligned with the others, and every nested block must follow that.
-❌ Your current snippet starts like this:
-
- - name: Apply libfscrypttwrp patch
-      run: |
-
-This is invalid because:
-
-    - name: starts at 1 space (should be 6 in most GitHub Actions YAMLs).
-
-    run: | is over-indented (6 spaces instead of 4 under - name:).
-
-✅ Corrected version:
-
-Make sure this appears under steps:, and is indented correctly like below:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Apply libfscrypttwrp patch
-        run: |
-          mkdir -p bootable/recovery/libfscrypt
-
-          cat > bootable/recovery/libfscrypt/Android.bp << 'EOF'
-cc_library {
-    name: "libfscrypttwrp"
-    defaults: ["recovery_defaults"],
-    recovery_available: true,
-    vendor_available: true,
-    srcs: [
-        "fscrypt_twrp.cpp",
-        "fscrypt.cpp",
-    ],
-    local_include_dirs: ["."],
-    shared_libs: [
-        "liblog",
-    ],
-    cflags: ["-Wno-unused-parameter"],
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt_twrp.cpp << 'EOF'
-#include <fscrypt/fscrypt.h>
-
-bool fscrypt_is_native() {
-    return false;
-}
-
-bool fscrypt_is_emulated() {
-    return false;
-}
-
-bool fscrypt_policy_set(const char* dir) {
-    return true;
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt.cpp << 'EOF'
-// Stub file for compatibility
-EOF
-
-          if ! grep -q 'libfscrypttwrp' bootable/recovery/fs_mgr/Android.bp; then
-            sed -i '/static_libs: \[/a \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
-          fi
-
-✅ Key Fixes Summary:
-
-    - name: is 2 spaces under steps:
-
-    run: | is 2 spaces under - name:
-
-    All script lines under run: are 2 more spaces (total 4 under - name:)
-
-If you'd like, you can paste the entire jobs: section, and I’ll format the whole thing for you.
-You said:
 name: Recovery Build
 
 on:
@@ -339,302 +32,7 @@ on:
       DEVICE_NAME:
         description: 'DEVICE_NAME'
         required: true
-        default: 'ice'
-      MAKEFILE_NAME:
-        description: 'MAKEFILE_NAME'
-        required: true
-        default: 'twrp_water'
-      BUILD_TARGET:
-        description: 'BUILD_TARGET'
-        required: true
-        default: 'boot'
-
-jobs:
-  build:
-    if: github.event.repository.owner.id == github.event.sender.id
-    runs-on:  ubuntu-22.04
-    permissions:
-      contents: write
-    steps:
-    - name: Display Run Parameters
-      run: |
-        echo "::group::User Environment Variables"
-        echo "Manifest URL: ${{ github.event.inputs.MANIFEST_URL }}"
-        echo "Manifest Branch: ${{ github.event.inputs.MANIFEST_BRANCH }}"
-        echo "Device Tree URL: ${{ github.event.inputs.DEVICE_TREE_URL }}"
-        echo "Device Tree Branch: ${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
-        echo "Device Path: ${{ github.event.inputs.DEVICE_PATH }}"
-        echo "Device Name: ${{ github.event.inputs.DEVICE_NAME }}"
-        echo "Makefile Name: ${{ github.event.inputs.MAKEFILE_NAME }}"
-        echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
-        echo "::endgroup::"
- 
-    # You might want to Checkout your repo first, but not mandatory
-    - name: Check Out
-      uses: actions/checkout@v3
-    # Cleanup The Actions Workspace Using Custom Composite Run Actions
-    - name: Cleanup
-      uses: rokibhasansagar/slimhub_actions@main
-      # That's it! Now use your normal steps
-
-    - name: Prepare the environment
-      run: |
-        sudo apt -y update
-        sudo apt -y upgrade
-        sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev  libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev python-is-python3
-        sudo dpkg --add-architecture i386
-        sudo apt -y update
-        sudo apt -y upgrade
-          
-    - name: Install OpenJDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '8'
-
-    - name: Setup SSH Keys
-      if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') }}
-      uses: webfactory/ssh-agent@v0.5.4
-      with:
-          ssh-private-key: |
-              ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Install repo
-      run: |
-        mkdir ~/bin
-        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-        chmod a+x ~/bin/repo
-        sudo ln -sf ~/bin/repo /usr/bin/repo
-      
-    - name: Initialize repo
-      run: |
-        mkdir workspace
-        cd workspace
-        echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
-        git config --global user.name "Nico170420"
-        git config --global user.email "b170420nc@gmail.com"
-        repo init --depth=1 -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
-      id: pwd
-          
-    - name: Repo Sync
-      run: |
-        repo sync -j$(nproc --all) --force-sync
-      working-directory: workspace
-      
-    - name: Clone device tree
-      run: |
-        git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
-    - name: Clone common tree
-      if: |
-        github.event.inputs.COMMON_TREE_URL != null
-        && github.event.inputs.COMMON_PATH != null
-      run: |
-        git clone ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
-    - name: Check Build Tree
-      uses: haya14busa/action-cond@v1
-      id: buildtree
-      with:
-        cond: ${{ github.event.inputs.MANIFEST_BRANCH == 'twrp-11' || github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
-        if_true: twrp
-        if_false: omni
-
-    - name: Sync Device Dependencies
-      run: |
-        bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ github.event.inputs.DEVICE_PATH }}/${{ steps.buildtree.outputs.value }}.dependencies
-        repo sync -j$(nproc --all)
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-      continue-on-error: true
-
-    - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
-      with:
-        swap-size-gb: 12
-    
-    - name: Apply libfscrypttwrp patch
-      run: |
-          mkdir -p bootable/recovery/libfscrypt
-
-          cat > bootable/recovery/libfscrypt/Android.bp << 'EOF'
-cc_library {
-    name: "libfscrypttwrp"
-    defaults: ["recovery_defaults"],
-    recovery_available: true,
-    vendor_available: true,
-    srcs: [
-        "fscrypt_twrp.cpp",
-        "fscrypt.cpp",
-    ],
-    local_include_dirs: ["."],
-    shared_libs: [
-        "liblog",
-    ],
-    cflags: ["-Wno-unused-parameter"],
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt_twrp.cpp << 'EOF'
-#include <fscrypt/fscrypt.h>
-
-bool fscrypt_is_native() {
-    return false;
-}
-
-bool fscrypt_is_emulated() {
-    return false;
-}
-
-bool fscrypt_policy_set(const char* dir) {
-    return true;
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt.cpp << 'EOF'
-// Stub file for compatibility
-EOF
-
-          if ! grep -q 'libfscrypttwrp' bootable/recovery/fs_mgr/Android.bp; then
-            sed -i '/static_libs: \[/a \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
-          fi
-        
-    - name: Building recovery
-      run: |
-        source build/envsetup.sh
-        export ALLOW_MISSING_DEPENDENCIES=true
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
-    - name: Upload to Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img
-        name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
-        tag_name: ${{ github.run_id }}
-        body: |
-          Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
-          Device: ${{ github.event.inputs.DEVICE_NAME }}
-          Target: ${{ github.event.inputs.BUILD_TARGET }}.img
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-ChatGPT said:
-
-Thanks for sharing your full workflow! I reviewed it and identified the root cause of your original error:
-
-    ❗ "can not read a block mapping entry; a multiline key may not be an implicit key"
-
-The issue comes from incorrect indentation in this block:
-
-    - name: Apply libfscrypttwrp patch
-      run: |
-          mkdir -p bootable/recovery/libfscrypt
-
-Specifically:
-
-    You used 4 spaces before mkdir and following lines.
-
-    But run: is only indented 2 spaces under - name:, which is valid — only if all run lines are indented with exactly 2 more spaces.
-
-✅ Fixed Version
-
-Update your "Apply libfscrypttwrp patch" step to this:
-
-    - name: Apply libfscrypttwrp patch
-      run: |
-        mkdir -p bootable/recovery/libfscrypt
-
-        cat > bootable/recovery/libfscrypt/Android.bp << 'EOF'
-cc_library {
-    name: "libfscrypttwrp"
-    defaults: ["recovery_defaults"],
-    recovery_available: true,
-    vendor_available: true,
-    srcs: [
-        "fscrypt_twrp.cpp",
-        "fscrypt.cpp",
-    ],
-    local_include_dirs: ["."],
-    shared_libs: [
-        "liblog",
-    ],
-    cflags: ["-Wno-unused-parameter"],
-}
-EOF
-
-        cat > bootable/recovery/libfscrypt/fscrypt_twrp.cpp << 'EOF'
-#include <fscrypt/fscrypt.h>
-
-bool fscrypt_is_native() {
-    return false;
-}
-
-bool fscrypt_is_emulated() {
-    return false;
-}
-
-bool fscrypt_policy_set(const char* dir) {
-    return true;
-}
-EOF
-
-        cat > bootable/recovery/libfscrypt/fscrypt.cpp << 'EOF'
-// Stub file for compatibility
-EOF
-
-        if ! grep -q 'libfscrypttwrp' bootable/recovery/fs_mgr/Android.bp; then
-          sed -i '/static_libs: \[/a \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
-        fi
-
-🧠 Why this works:
-
-    YAML requires all lines under run: | to be indented at the same level (typically 2 spaces deeper than run:).
-
-    You previously used 4 spaces, which was interpreted as a new mapping key → hence the confusing error.
-
-Let me know if you'd like me to lint or validate the entire workflow — it's looking good overall!
-You said:
-write full
-ChatGPT said:
-
-Sure! Here's your entire corrected GitHub Actions workflow with proper YAML formatting — including the fixed indentation for the Apply libfscrypttwrp patch step:
-
-name: Recovery Build
-
-on:
-  workflow_dispatch:
-    inputs:
-      MANIFEST_URL:
-        description: 'MANIFEST_URL (if want to use SSH keys, use git@github.com:XXXXX)'
-        required: true
-        default: 'https://github.com/SHRP/manifest.git'
-      MANIFEST_BRANCH:
-        description: 'MANIFEST_BRANCH'
-        required: true
-        default: 'shrp-12.1'
-      DEVICE_TREE_URL:
-        description: 'DEVICE_TREE_URL'
-        required: true
-        default: 'https://github.com/Carckv2/recovery_device_water.git'
-      DEVICE_TREE_BRANCH:
-        description: 'DEVICE_TREE_BRANCH'
-        required: true
-        default: 'main'
-      DEVICE_PATH:
-        description: 'DEVICE_PATH'
-        required: true
-        default: 'device/xiaomi/water'
-      COMMON_TREE_URL:
-        description: 'COMMON_TREE_URL (if no common tree, leave blank)'
-        required: false
-      COMMON_PATH:
-        description: 'COMMON_PATH (if no common tree, leave blank)'
-        required: false
-      DEVICE_NAME:
-        description: 'DEVICE_NAME'
-        required: true
-        default: 'ice'
+        default: 'water'
       MAKEFILE_NAME:
         description: 'MAKEFILE_NAME'
         required: true
@@ -672,12 +70,17 @@ jobs:
 
       - name: Prepare the environment
         run: |
-          sudo apt -y update
-          sudo apt -y upgrade
-          sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev python-is-python3
+          sudo apt -y update && sudo apt -y upgrade
           sudo dpkg --add-architecture i386
-          sudo apt -y update
-          sudo apt -y upgrade
+          sudo apt -y update && sudo apt -y upgrade
+          sudo apt -y install \
+            gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib \
+            libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree \
+            lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache \
+            lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev \
+            libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush \
+            schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp \
+            qemu-user-static libstdc++-10-dev python-is-python3
 
       - name: Install OpenJDK
         uses: actions/setup-java@v3
@@ -686,23 +89,21 @@ jobs:
           java-version: '8'
 
       - name: Setup SSH Keys
-        if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') }}
+        if: startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com')
         uses: webfactory/ssh-agent@v0.5.4
         with:
-          ssh-private-key: |
-            ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install repo
         run: |
-          mkdir ~/bin
+          mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           sudo ln -sf ~/bin/repo /usr/bin/repo
 
       - name: Initialize repo
         run: |
-          mkdir workspace
-          cd workspace
+          mkdir workspace && cd workspace
           echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
           git config --global user.name "Nico170420"
           git config --global user.email "b170420nc@gmail.com"
@@ -720,8 +121,7 @@ jobs:
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
       - name: Clone common tree
-        if: |
-          github.event.inputs.COMMON_TREE_URL != null && github.event.inputs.COMMON_PATH != null
+        if: "${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}"
         run: |
           git clone ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
@@ -736,10 +136,9 @@ jobs:
 
       - name: Sync Device Dependencies
         run: |
-          bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ github.event.inputs.DEVICE_PATH }}/${{ steps.buildtree.outputs.value }}.dependencies
+          bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ github.event.inputs.DEVICE_PATH }}/${{ steps.buildtree.outputs.value }}.dependencies || true
           repo sync -j$(nproc --all)
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-        continue-on-error: true
 
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
@@ -749,54 +148,42 @@ jobs:
       - name: Apply libfscrypttwrp patch
         run: |
           mkdir -p bootable/recovery/libfscrypt
+          echo 'cc_library({' > bootable/recovery/libfscrypt/Android.bp
+          echo '    name: "libfscrypttwrp",' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    defaults: ["recovery_defaults"],' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    recovery_available: true,' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    vendor_available: true,' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    srcs: [' >> bootable/recovery/libfscrypt/Android.bp
+          echo '        "fscrypt_twrp.cpp",' >> bootable/recovery/libfscrypt/Android.bp
+          echo '        "fscrypt.cpp",' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    ],' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    local_include_dirs: ["."],' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    shared_libs: [' >> bootable/recovery/libfscrypt/Android.bp
+          echo '        "liblog",' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    ],' >> bootable/recovery/libfscrypt/Android.bp
+          echo '    cflags: ["-Wno-unused-parameter"],' >> bootable/recovery/libfscrypt/Android.bp
+          echo '})' >> bootable/recovery/libfscrypt/Android.bp
 
-          cat > bootable/recovery/libfscrypt/Android.bp << 'EOF'
-cc_library {
-    name: "libfscrypttwrp"
-    defaults: ["recovery_defaults"],
-    recovery_available: true,
-    vendor_available: true,
-    srcs: [
-        "fscrypt_twrp.cpp",
-        "fscrypt.cpp",
-    ],
-    local_include_dirs: ["."],
-    shared_libs: [
-        "liblog",
-    ],
-    cflags: ["-Wno-unused-parameter"],
-}
-EOF
+          echo '#include <fscrypt/fscrypt.h>' > bootable/recovery/libfscrypt/fscrypt_twrp.cpp
+          echo '' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
+          echo 'bool fscrypt_is_native() { return false; }' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
+          echo 'bool fscrypt_is_emulated() { return false; }' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
+          echo 'bool fscrypt_policy_set(const char* dir) { return true; }' >> bootable/recovery/libfscrypt/fscrypt_twrp.cpp
 
-          cat > bootable/recovery/libfscrypt/fscrypt_twrp.cpp << 'EOF'
-#include <fscrypt/fscrypt.h>
-
-bool fscrypt_is_native() {
-    return false;
-}
-
-bool fscrypt_is_emulated() {
-    return false;
-}
-
-bool fscrypt_policy_set(const char* dir) {
-    return true;
-}
-EOF
-
-          cat > bootable/recovery/libfscrypt/fscrypt.cpp << 'EOF'
-// Stub file for compatibility
-EOF
+          echo '// Stub file for compatibility' > bootable/recovery/libfscrypt/fscrypt.cpp
 
           if ! grep -q 'libfscrypttwrp' bootable/recovery/fs_mgr/Android.bp; then
-            sed -i '/static_libs: \[/a \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
+            sed -i '/static_libs: \[/a \\ \ \ \ \ "libfscrypttwrp",' bootable/recovery/fs_mgr/Android.bp
           fi
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
       - name: Building recovery
         run: |
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
-          lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
+          lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng
+          make clean
+          make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
         working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
       - name: Upload to Release
