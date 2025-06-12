@@ -146,11 +146,11 @@ jobs:
           swap-size-gb: 12
 
       - name: Apply libfscrypttwrp patch
+        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
         run: |
           mkdir -p bootable/recovery/libfscrypt
 
-          cat << 'EOF' > bootable/recovery/libfscrypt/Android.bp
-cc_library_static {
+          echo 'cc_library_static {
     name: "libfscrypttwrp",
     recovery_available: true,
     vendor_available: true,
@@ -167,11 +167,9 @@ cc_library_static {
         "-Werror",
         "-Wno-unused-parameter",
     ],
-}
-EOF
+}' > bootable/recovery/libfscrypt/Android.bp
 
-          cat << 'EOF' > bootable/recovery/libfscrypt/fscrypt_twrp.cpp
-#include <fscrypt/fscrypt.h>
+          echo '#include <fscrypt/fscrypt.h>
 
 bool fscrypt_is_native() {
     return false;
@@ -183,12 +181,9 @@ bool fscrypt_is_emulated() {
 
 bool fscrypt_policy_set(const char* dir) {
     return true;
-}
-EOF
+}' > bootable/recovery/libfscrypt/fscrypt_twrp.cpp
 
-          cat << 'EOF' > bootable/recovery/libfscrypt/fscrypt.cpp
-// Stub source file for compatibility
-EOF
+          echo '// Stub source file for compatibility' > bootable/recovery/libfscrypt/fscrypt.cpp
 
           FS_MGR_BP="bootable/recovery/fs_mgr/Android.bp"
           if [ -f "$FS_MGR_BP" ]; then
@@ -199,7 +194,6 @@ EOF
           else
             echo "Warning: $FS_MGR_BP not found, skipping injection."
           fi
-        working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
       - name: Building recovery
         run: |
