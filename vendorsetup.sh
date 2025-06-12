@@ -70,7 +70,10 @@ if [ "$1" = "$FDEVICE" -o "$FOX_BUILD_DEVICE" = "$FDEVICE" ]; then
 	export FOX_DELETE_MAGISK_ADDON=1
 
 	# R12.1 Settings
-	export FOX_VERSION="R12.1_7"
+	export FOX_VERSION_MAJOR=12
+        export FOX_VERSION_MINOR=1
+	export FOX_VERSION_PATCH=0  # Change this if you're adding a patch
+        export FOX_MAINTAINER_PATCH_VERSION=R12.1_0  # Optional: your own custom patch version
 	export FOX_BUILD_TYPE="Unoffical"
 	export OF_MAINTAINER="Ninja"
 
