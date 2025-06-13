@@ -1,19 +1,26 @@
-# Android fstab file.
-# The filesystem that contains the filesystem checker binary (typically /system) cannot
-# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
+# Super image logical partitions (read-only erofs)
+/system_root      erofs    system      flags=display=system_root;logical;slotselect;avb
+/system           erofs    system      flags=display=System;logical;slotselect;avb
+/vendor           erofs    vendor      flags=display=Vendor;logical;slotselect;avb
+/product          erofs    product     flags=display=Product;logical;slotselect;avb
 
-# TODO: Add 'check' as fs_mgr_flags with data partition.
-# Currently we dont have e2fsck compiled. So fs check would failed.
+# Data partition with encryption support
+/data             f2fs     /dev/block/platform/bootdevice/by-name/userdata flags=display=Data;encryptable=footer;reservedsize=128M;length=-16384;latemount;fileencryption=aes-256-xts:aes-256-cts:v2;keydirectory=/metadata/vold/metadata_encryption;checkpoint=fs
 
-system                                                   /system                   erofs    ro               wait,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey,slotselect
-system                                               	 /system                   ext4     ro               wait,avb=vbmeta_system,logical,first_stage_mount,avb_keys=/avb/q-gsi.avbpubkey:/avb/r-gsi.avbpubkey:/avb/s-gsi.avbpubkey,slotselect
-vendor                                                   /vendor                   erofs    ro               ro wait,avb,logical,first_stage_mount,slotselect
-vendor                                                   /vendor                   ext4     ro               ro wait,avb,logical,first_stage_mount,slotselect
-product                                                  /product                  erofs    ro               wait,avb,logical,first_stage_mount,slotselect						
-product                                                  /product                  ext4     ro               wait,avb,logical,first_stage_mount,slotselect						
+# Metadata for decryption
+/metadata         ext4     /dev/block/platform/bootdevice/by-name/metadata flags=display=Metadata;first_stage_mount
 
-/dev/block/platform/bootdevice/by-name/metadata          /metadata                 ext4     noatime,nosuid,nodev,discard,data=journal,commit=1                                                                                                wait,check,formattable,first_stage_mount
-/dev/block/platform/bootdevice/by-name/userdata          /data                     f2fs     noatime,nosuid,nodev,discard,noflush_merge,reserve_root=134217,resgid=1065,inlinecrypt,alloc_mode=reuse,fsync_mode=nobarrier,checkpoint_merge     latemount,wait,check,quota,reservedsize=128M,formattable,resize,checkpoint=fs,fileencryption=aes-256-xts
+# Boot image
+/boot             emmc     /dev/block/platform/bootdevice/by-name/boot     flags=display=Boot;slotselect;canflashimg
 
-/dev/block/platform/bootdevice/by-name/para              /para                     emmc     defaults               defaults
-	
+# Verified boot metadata
+/vbmeta           emmc     /dev/block/platform/bootdevice/by-name/vbmeta          flags=display=Vbmeta;slotselect;avb
+/vbmeta_system    emmc     /dev/block/platform/bootdevice/by-name/vbmeta_system   flags=display=Vbmeta_System;slotselect;avb
+/vbmeta_vendor    emmc     /dev/block/platform/bootdevice/by-name/vbmeta_vendor   flags=display=Vbmeta_Vendor;slotselect;avb
+
+# FRP and misc
+/persistent       emmc     /dev/block/platform/bootdevice/by-name/frp      flags=display=FRP
+/misc             emmc     /dev/block/platform/bootdevice/by-name/misc     flags=display=Misc
+
+# Optional cache (only if used by your ROM)
+/cache            ext4     /dev/block/platform/bootdevice/by-name/cache    flags=display=Cache;backup=1
